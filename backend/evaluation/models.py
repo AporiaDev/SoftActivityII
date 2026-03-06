@@ -2,6 +2,7 @@
 Modelos para la evaluación de perfiles/personalidad.
 """
 from django.db import models
+from django.conf import settings
 
 
 def scale_value_to_level(value):
@@ -44,6 +45,24 @@ def calculate_profile_type(answers_queryset):
     return max(totals, key=totals.get)
 
 
+class UserProfile(models.Model):
+    """Perfil del usuario: rol elegido al registrarse (responder encuesta o administrador)."""
+    ROL_RESPONDER = 'responder'
+    ROL_ADMIN = 'admin'
+    ROLES = [(ROL_RESPONDER, 'Responder encuesta'), (ROL_ADMIN, 'Administrador')]
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='evaluation_profile',
+        primary_key=True,
+    )
+    role = models.CharField(max_length=20, choices=ROLES, default=ROL_RESPONDER, db_index=True)
+
+    class Meta:
+        verbose_name = 'Perfil de usuario'
+        verbose_name_plural = 'Perfiles de usuario'
+
+
 class Question(models.Model):
     """Pregunta del formulario con su tipo asociado (a, b, c, d)."""
     QUESTION_TYPES = [
@@ -71,13 +90,21 @@ class Question(models.Model):
 
 
 class Submission(models.Model):
-    """Envío del formulario: fecha y resultado calculado (tipo de perfil)."""
+    """Envío del formulario: fecha, usuario (quien responde) y resultado calculado (tipo de perfil)."""
     PROFILE_TYPES = [
         ('a', 'Tipo A'),
         ('b', 'Tipo B'),
         ('c', 'Tipo C'),
         ('d', 'Tipo D'),
     ]
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='evaluation_submissions',
+        verbose_name='Usuario que respondió'
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Fecha')
     result_type = models.CharField(
         max_length=1,

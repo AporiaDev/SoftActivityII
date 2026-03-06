@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import Question, Submission, Answer
+from .models import Question, Submission, Answer, UserProfile
+
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'role']
+    list_filter = ['role']
 
 
 @admin.register(Question)
@@ -21,7 +27,7 @@ class AnswerInline(admin.TabularInline):
 
 @admin.register(Submission)
 class SubmissionAdmin(admin.ModelAdmin):
-    list_display = ['id', 'created_at', 'result_type']
+    list_display = ['id', 'created_at', 'user', 'result_type']
     list_filter = ['result_type', 'created_at']
     readonly_fields = ['created_at', 'result_type']
     inlines = [AnswerInline]

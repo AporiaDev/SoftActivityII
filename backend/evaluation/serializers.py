@@ -32,7 +32,8 @@ class SubmissionCreateSerializer(serializers.Serializer):
         return value
 
     def create(self, validated_data):
-        submission = Submission.objects.create()
+        user = self.context.get('request').user if self.context.get('request') else None
+        submission = Submission.objects.create(user=user if (user and user.is_authenticated) else None)
         answers_data = validated_data['answers']
         question_ids = [a['question_id'] for a in answers_data]
         questions = {q.id: q for q in Question.objects.filter(id__in=question_ids)}
